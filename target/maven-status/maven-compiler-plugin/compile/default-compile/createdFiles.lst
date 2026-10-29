@@ -1,12 +1,7 @@
 com\eventhub\repository\EventRepository.class
-com\eventhub\filter\RequestAuditAndEncodingFilter.class
 com\eventhub\dao\EventAnalyticsDao.class
-com\eventhub\listener\AppSessionListener.class
-com\eventhub\servlet\EventRegistrationServlet.class
 com\eventhub\controller\RegistrationController.class
 com\eventhub\servlet\ParticipantCsvExportServlet.class
-com\eventhub\dao\RegistrationJdbcDao.class
-com\eventhub\dao\EventJdbcDao.class
 com\eventhub\controller\EventController.class
 com\eventhub\model\Registration.class
 com\eventhub\concurrency\EventMonitoringDaemon.class
@@ -17,7 +12,6 @@ com\eventhub\controller\HomeController.class
 com\eventhub\concurrency\BookingLockManager.class
 com\eventhub\controller\AdminController.class
 com\eventhub\repository\RegistrationRepository.class
-com\eventhub\servlet\EventListServlet.class
 com\eventhub\service\RegistrationService.class
 com\eventhub\EventManagementApplication.class
 com\eventhub\model\Event.class
