@@ -186,7 +186,7 @@ event-management-system/
 
 ### 2. Clone the Repository
 ```bash
-git clone https://github.com/sahilcodes-deadxnut/event-management-system.git
+git clone https://github.com/YOUR_USERNAME/event-management-system.git
 cd event-management-system
 ```
 
@@ -242,8 +242,12 @@ No MySQL installation required. Runs instantly with pre-seeded sample events:
 | `http://localhost:8080/events/{id}/register` | Participant registration form with capacity and email checks |
 | `http://localhost:8080/registrations/lookup` | Ticket code verification and pass retrieval portal |
 | `http://localhost:8080/admin` | Administrative console for event CRUD and attendee management |
+| `http://localhost:8080/admin/analytics` | Direct JDBC DAO live occupancy analytics (`EventAnalyticsDao`) |
 | `http://localhost:8080/admin/events/new` | Create a new event listing |
 | `http://localhost:8080/admin/events/{id}/participants` | Live attendee roster and registration cancellation |
+| `http://localhost:8080/export/participants.csv?eventId=1` | CSV download streamed via `ParticipantCsvExportServlet` |
+| `http://localhost:8080/servlets/events` | Pure `HttpServlet` event catalog with session tracking (`EventListServlet`) |
+| `http://localhost:8080/servlets/register?eventId=1` | Pure `HttpServlet` registration with raw JDBC transaction (`EventRegistrationServlet`) |
 
 ---
 
