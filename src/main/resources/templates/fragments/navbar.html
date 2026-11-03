@@ -25,8 +25,18 @@
                     <li class="nav-item">
                         <a class="nav-link text-light" th:href="@{/registrations/lookup}"><i class="bi bi-ticket-perforated me-1"></i> Find My Ticket</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-light" th:href="@{/servlets/events}"><i class="bi bi-cpu me-1"></i> Servlet Catalog</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-light" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-cpu me-1"></i> Servlets &amp; API
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark shadow">
+                            <li><a class="dropdown-item" th:href="@{/servlets/events}"><i class="bi bi-window-fullscreen me-2"></i> Servlet Catalog (HttpServlet)</a></li>
+                            <li><a class="dropdown-item" th:href="@{/api/events}" target="_blank"><i class="bi bi-file-code me-2"></i> RESTful JSON API (/api/events)</a></li>
+                            <li><a class="dropdown-item" th:href="@{/servlets/stream/capacity}" target="_blank"><i class="bi bi-broadcast me-2"></i> Live SSE Capacity Stream (Async)</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" th:href="@{/admin/analytics}"><i class="bi bi-database-check me-2"></i> Direct JDBC Analytics DAO</a></li>
+                            <li><a class="dropdown-item" th:href="@{/servlets/ticket-badge(code='EVT-2026-A101')}" target="_blank"><i class="bi bi-qr-code me-2"></i> Dynamic SVG QR Badge</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-light" th:href="@{/about}"><i class="bi bi-info-circle me-1"></i> About Project</a>

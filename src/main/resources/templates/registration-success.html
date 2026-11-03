@@ -37,47 +37,64 @@
                 </div>
 
                 <div class="ticket-body">
-                    <div class="row g-4">
-                        <div class="col-sm-6">
-                            <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Attendee</small>
-                            <h5 class="fw-bold text-dark mb-0" th:text="${registration.participantName}">Attendee Name</h5>
-                        </div>
-                        <div class="col-sm-6">
-                            <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Pass Code</small>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-primary fs-6 px-3 py-2 font-monospace" th:text="${registration.registrationCode}">EVT-2026-X89J</span>
-                                <button type="button" class="btn btn-outline-secondary btn-sm no-print" 
-                                        th:onclick="'copyTicketCode(\'' + ${registration.registrationCode} + '\')'" title="Copy Code">
-                                    <i class="bi bi-clipboard"></i>
-                                </button>
+                    <div class="row g-4 align-items-center">
+                        <div class="col-md-8">
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Attendee</small>
+                                    <h5 class="fw-bold text-dark mb-0" th:text="${registration.participantName}">Attendee Name</h5>
+                                </div>
+                                <div class="col-sm-6">
+                                    <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Pass Code</small>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-primary fs-6 px-3 py-2 font-monospace" th:text="${registration.registrationCode}">EVT-2026-X89J</span>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm no-print" 
+                                                th:onclick="'copyTicketCode(\'' + ${registration.registrationCode} + '\')'" title="Copy Code">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Date & Time</small>
+                                    <span class="fw-semibold text-secondary" th:text="${registration.event.formattedDate}">Mon, 15 Oct 2026, 10:00 AM</span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Venue</small>
+                                    <span class="fw-semibold text-secondary" th:text="${registration.event.venue}">Auditorium Hall B</span>
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Email</small>
+                                    <span class="text-secondary" th:text="${registration.email}">email@example.com</span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Phone</small>
+                                    <span class="text-secondary" th:text="${registration.phone}">9876543210</span>
+                                </div>
+
+                                <div class="col-sm-6" th:if="${registration.organization != null and !registration.organization.isEmpty()}">
+                                    <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Organization</small>
+                                    <span class="text-secondary" th:text="${registration.organization}">Organization</span>
+                                </div>
+                                <div class="col-sm-6" th:if="${registration.roleTitle != null and !registration.roleTitle.isEmpty()}">
+                                    <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Role / Title</small>
+                                    <span class="text-secondary" th:text="${registration.roleTitle}">Role</span>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="col-sm-6">
-                            <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Date & Time</small>
-                            <span class="fw-semibold text-secondary" th:text="${registration.event.formattedDate}">Mon, 15 Oct 2026, 10:00 AM</span>
-                        </div>
-                        <div class="col-sm-6">
-                            <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Venue</small>
-                            <span class="fw-semibold text-secondary" th:text="${registration.event.venue}">Auditorium Hall B</span>
-                        </div>
-
-                        <div class="col-sm-6">
-                            <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Email</small>
-                            <span class="text-secondary" th:text="${registration.email}">email@example.com</span>
-                        </div>
-                        <div class="col-sm-6">
-                            <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Phone</small>
-                            <span class="text-secondary" th:text="${registration.phone}">9876543210</span>
-                        </div>
-
-                        <div class="col-sm-6" th:if="${registration.organization != null and !registration.organization.isEmpty()}">
-                            <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Organization</small>
-                            <span class="text-secondary" th:text="${registration.organization}">Organization</span>
-                        </div>
-                        <div class="col-sm-6" th:if="${registration.roleTitle != null and !registration.roleTitle.isEmpty()}">
-                            <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Role / Title</small>
-                            <span class="text-secondary" th:text="${registration.roleTitle}">Role</span>
+                        <!-- Scannable Dynamic SVG QR Code Badge (Servlet Generated) -->
+                        <div class="col-md-4 text-center">
+                            <div class="p-2 border rounded-3 bg-light d-inline-block shadow-sm">
+                                <img th:src="@{/servlets/ticket-badge(code=${registration.registrationCode})}" 
+                                     alt="Scannable QR Pass Badge" 
+                                     style="max-width: 170px; height: auto;" 
+                                     class="rounded" />
+                                <div class="small text-muted mt-1 fw-bold" style="font-size: 0.7rem;">
+                                    <i class="bi bi-qr-code-scan me-1"></i> Scan at Gate
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -96,7 +113,10 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="text-center mt-4 d-flex justify-content-center gap-3 no-print">
+            <div class="text-center mt-4 d-flex flex-wrap justify-content-center gap-3 no-print">
+                <a th:href="@{/servlets/ticket-badge(code=${registration.registrationCode})}" target="_blank" class="btn btn-outline-primary px-3">
+                    <i class="bi bi-qr-code me-2"></i> View Vector QR Badge (Servlet)
+                </a>
                 <button onclick="window.print()" class="btn btn-outline-dark px-4">
                     <i class="bi bi-printer me-2"></i> Print / Save Pass
                 </button>

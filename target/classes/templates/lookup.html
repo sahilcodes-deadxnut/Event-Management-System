@@ -59,32 +59,47 @@
                             </div>
 
                             <div class="ticket-body">
-                                <div class="row g-4">
-                                    <div class="col-sm-6">
-                                        <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Attendee</small>
-                                        <h5 class="fw-bold text-dark mb-0" th:text="${registration.participantName}">Participant Name</h5>
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Pass Code</small>
-                                        <span class="badge bg-primary fs-6 px-3 py-2 font-monospace" th:text="${registration.registrationCode}">EVT-2026-X89J</span>
-                                    </div>
+                                <div class="row g-4 align-items-center">
+                                    <div class="col-md-8">
+                                        <div class="row g-3">
+                                            <div class="col-sm-6">
+                                                <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Attendee</small>
+                                                <h5 class="fw-bold text-dark mb-0" th:text="${registration.participantName}">Participant Name</h5>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Pass Code</small>
+                                                <span class="badge bg-primary fs-6 px-3 py-2 font-monospace" th:text="${registration.registrationCode}">EVT-2026-X89J</span>
+                                            </div>
 
-                                    <div class="col-sm-6">
-                                        <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Date & Time</small>
-                                        <span class="fw-semibold text-secondary" th:text="${registration.event.formattedDate}">Date</span>
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Venue</small>
-                                        <span class="fw-semibold text-secondary" th:text="${registration.event.venue}">Venue</span>
-                                    </div>
+                                            <div class="col-sm-6">
+                                                <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Date & Time</small>
+                                                <span class="fw-semibold text-secondary" th:text="${registration.event.formattedDate}">Date</span>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Venue</small>
+                                                <span class="fw-semibold text-secondary" th:text="${registration.event.venue}">Venue</span>
+                                            </div>
 
-                                    <div class="col-sm-6">
-                                        <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Registered Email</small>
-                                        <span class="text-secondary" th:text="${registration.email}">email</span>
+                                            <div class="col-sm-6">
+                                                <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Registered Email</small>
+                                                <span class="text-secondary" th:text="${registration.email}">email</span>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Phone</small>
+                                                <span class="text-secondary" th:text="${registration.phone}">phone</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="col-sm-6">
-                                        <small class="text-muted text-uppercase d-block fw-semibold" style="font-size: 0.75rem;">Phone</small>
-                                        <span class="text-secondary" th:text="${registration.phone}">phone</span>
+                                    <div class="col-md-4 text-center">
+                                        <div class="p-2 border rounded-3 bg-light d-inline-block shadow-sm">
+                                            <img th:src="@{/servlets/ticket-badge(code=${registration.registrationCode})}" 
+                                                 alt="Scannable QR Pass Badge" 
+                                                 style="max-width: 140px; height: auto;" 
+                                                 class="rounded" />
+                                            <div class="small text-muted mt-1 fw-bold" style="font-size: 0.7rem;">
+                                                <i class="bi bi-qr-code-scan me-1"></i> Gate Pass
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
