@@ -147,7 +147,7 @@ To prevent overbooking when multiple users compete for the final seat:
 | **Security** | PBKDF2-HMAC-SHA512 + Session Auth | Custom password hashing, route interceptors, and CSRF protection |
 | **Testing** | JUnit 5 + AssertJ + MockMvc | Automated unit, integration, security, and concurrency stress tests |
 | **Frontend** | Thymeleaf 3 + Bootstrap 5.3 | Dynamic server-side rendering with responsive modern styling |
-| **Build Tool** | Apache Maven 3.9 | Dependency management and packaging (Maven Wrapper included) |
+| **Build Tool** | Apache Maven 3.9 | Build lifecycle, dependency management, and test execution |
 
 ---
 
@@ -247,50 +247,55 @@ event-management-system/
 ## ⚡ Getting Started
 
 ### 1. Prerequisites
-* **Java 21 LTS** installed:
+Ensure the following tools are installed and accessible from your terminal (`PATH`):
+* **Java 21** (or Java 17+):
   ```bash
   java -version
   ```
+* **Apache Maven** (3.8+):
+  ```bash
+  mvn -version
+  ```
+* *(Optional for MySQL mode)* **MySQL Server 8.0+** running on port `3306`. If you do not have MySQL installed, you can run the zero-setup H2 in-memory mode without installing anything.
 
 ---
 
 ### 2. Running the Application
 
-You can run the application in either of two modes:
+Choose **one** of the two modes below:
 
-#### Option A: Zero-Configuration Mode (Built-in H2 In-Memory DB)
-No MySQL installation required. Runs instantly with pre-seeded sample events:
+#### Option A: Quick Start with In-Memory H2 (No Database Setup Needed)
+Starts the application immediately using the built-in in-memory database with pre-seeded demo events.
+
+**Windows / macOS / Linux:**
 ```bash
-# Windows
-.\run-h2.bat
-
-# Or using Maven wrapper
-.\mvnw.cmd spring-boot:run "-Dspring-boot.run.arguments=--spring.profiles.active=h2"
-
-# Linux / macOS
-./mvnw spring-boot:run -Dspring-boot.run.arguments=--spring.profiles.active=h2
+mvn spring-boot:run -Dspring-boot.run.arguments=--spring.profiles.active=h2
 ```
+*(Windows users can also double-click `run-h2.bat`)*
 
-#### Option B: MySQL Database Mode
-1. Start MySQL (via XAMPP, Docker, or native service) on port `3306`.
+#### Option B: Standard Start with MySQL Database
+1. Make sure your MySQL server is running on port `3306`.
 2. Create the database:
    ```sql
    CREATE DATABASE event_db;
    ```
-3. Update `src/main/resources/application.properties` if your password differs:
-   ```properties
-   spring.datasource.url=jdbc:mysql://localhost:3306/event_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
-   spring.datasource.username=root
-   spring.datasource.password=
-   ```
+3. If your MySQL credentials differ from `root` with a blank password, update them in `src/main/resources/application.properties`.
 4. Start the application:
    ```bash
-   # Windows
-   .\run.bat
+   mvn spring-boot:run
+   ```
+   *(Windows users can also double-click `run.bat`)*
 
-# Or using Maven wrapper
-.\mvnw.cmd spring-boot:run
-```
+---
+
+### 3. Accessing the Application in Your Browser
+Once the terminal displays `Started EventManagementApplication`, open your web browser:
+* **Public Event Portal:** [http://localhost:8080](http://localhost:8080)
+* **Organizer Admin Console:** [http://localhost:8080/admin](http://localhost:8080/admin) *(Sign in using default credentials below)*
+* **H2 Database Console:** [http://localhost:8080/h2-console](http://localhost:8080/h2-console) *(H2 mode only — JDBC URL: `jdbc:h2:mem:event_db`, User: `sa`, Password: empty)*
+
+### 4. Stopping the Application
+To stop the running application, press `Ctrl + C` in your terminal window.
 
 ---
 
@@ -303,7 +308,7 @@ When accessing the organizer control console at `/admin`, log in with:
 | **Username** | `admin` | Case-insensitive |
 | **Password** | `AdminPassword123!` | Hashed with PBKDF2-HMAC-SHA512 at startup |
 
-*You can configure custom credentials via `app.admin.username` and `app.admin.password` in `application.properties` or via environment variables.*
+*You can configure custom credentials via `app.admin.username` and `app.admin.password` in `application.properties` or via environment variables `ADMIN_USERNAME` and `ADMIN_PASSWORD`.*
 
 ---
 
@@ -339,17 +344,13 @@ The project includes an automated test suite with **31 automated tests** coverin
 
 ### Running All Tests
 ```bash
-# Windows
-.\mvnw.cmd test
-
-# Linux / macOS
-./mvnw test
+mvn test
 ```
 
 ### Packaging the Application
+To build a standalone executable JAR in `target/`:
 ```bash
-# Creates self-contained executable JAR in target/
-.\mvnw.cmd package
+mvn clean package
 ```
 
 ### Test Coverage Summary:
