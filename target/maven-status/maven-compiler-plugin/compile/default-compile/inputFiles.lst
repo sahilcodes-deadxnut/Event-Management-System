@@ -10,10 +10,13 @@ C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java
 C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\servlet\ParticipantCsvExportServlet.java
 C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\filter\RequestAuditAndEncodingFilter.java
 C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\dto\EventOccupancyDto.java
+C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\security\PasswordHasher.java
 C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\diagnostic\SystemVerificationRunner.java
 C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\listener\AppSessionListener.java
+C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\config\WebMvcConfig.java
 C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\config\ServletConfig.java
 C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\exception\GlobalExceptionHandler.java
+C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\security\AdminSecurityInterceptor.java
 C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\dao\EventAnalyticsDao.java
 C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\service\EventService.java
 C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\servlet\EventListServlet.java
@@ -27,4 +30,6 @@ C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java
 C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\util\SecuritySanitizer.java
 C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\model\Registration.java
 C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\EventManagementApplication.java
+C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\util\PptxBuilder.java
+C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\security\AdminAuthService.java
 C:\Users\Sahil\.gemini\antigravity\scratch\event-management-system\src\main\java\com\eventhub\dao\EventJdbcDao.java

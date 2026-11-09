@@ -2,8 +2,10 @@ package com.eventhub.controller;
 
 import com.eventhub.model.Event;
 import com.eventhub.model.Registration;
+import com.eventhub.security.AdminAuthService;
 import com.eventhub.service.EventService;
 import com.eventhub.service.RegistrationService;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -20,38 +22,78 @@ import java.util.Optional;
 @RequestMapping("/admin")
 public class AdminController {
 
-    // Services handling business operations for events and attendee registrations
     private final EventService eventService;
     private final RegistrationService registrationService;
-    // Direct JDBC DAO executing raw PreparedStatement queries for aggregate reporting
     private final com.eventhub.dao.EventAnalyticsDao eventAnalyticsDao;
+    private final AdminAuthService adminAuthService;
 
     @Autowired
     public AdminController(EventService eventService,
                            RegistrationService registrationService,
-                           com.eventhub.dao.EventAnalyticsDao eventAnalyticsDao) {
-        // Inject dependencies for administrative event and attendee management
+                           com.eventhub.dao.EventAnalyticsDao eventAnalyticsDao,
+                           AdminAuthService adminAuthService) {
         this.eventService = eventService;
         this.registrationService = registrationService;
         this.eventAnalyticsDao = eventAnalyticsDao;
+        this.adminAuthService = adminAuthService;
+    }
+
+    @GetMapping("/login")
+    public String showLoginForm(@RequestParam(value = "redirect", required = false) String redirect,
+                                @RequestParam(value = "error", required = false) String error,
+                                @RequestParam(value = "logout", required = false) String logout,
+                                HttpSession session,
+                                Model model) {
+        if (adminAuthService.isAuthenticated(session)) {
+            return "redirect:/admin";
+        }
+        model.addAttribute("redirect", redirect != null ? redirect : "/admin");
+        if (error != null) {
+            model.addAttribute("errorMessage", "Invalid administrator username or password.");
+        }
+        if (logout != null) {
+            model.addAttribute("successMessage", "You have been logged out successfully.");
+        }
+        return "admin/login";
+    }
+
+    @PostMapping("/login")
+    public String processLogin(@RequestParam("username") String username,
+                               @RequestParam("password") String password,
+                               @RequestParam(value = "redirect", required = false) String redirect,
+                               HttpSession session,
+                               RedirectAttributes redirectAttributes) {
+        boolean success = adminAuthService.authenticate(username, password, session);
+        if (success) {
+            redirectAttributes.addFlashAttribute("successMessage", "Welcome back, " + username + "!");
+            if (redirect != null && !redirect.trim().isEmpty() && redirect.startsWith("/admin")) {
+                return "redirect:" + redirect;
+            }
+            return "redirect:/admin";
+        }
+        redirectAttributes.addFlashAttribute("errorMessage", "Invalid credentials. Please verify your username and password.");
+        return "redirect:/admin/login" + (redirect != null ? "?redirect=" + redirect : "");
+    }
+
+    @RequestMapping(value = "/logout", method = {RequestMethod.GET, RequestMethod.POST})
+    public String processLogout(HttpSession session, RedirectAttributes redirectAttributes) {
+        adminAuthService.logout(session);
+        redirectAttributes.addFlashAttribute("successMessage", "Signed out successfully.");
+        return "redirect:/admin/login?logout=true";
     }
 
     @GetMapping
-    public String dashboard(Model model) {
-        // Retrieve the complete list of all registered events
+    public String dashboard(HttpSession session, Model model) {
         List<Event> allEvents = eventService.getAllEvents();
-        // Calculate the aggregate number of attendee registrations across all events
         long totalRegistrations = registrationService.getTotalRegistrationsCount();
-        // Count events scheduled to happen in the future
         long upcomingEvents = eventService.getUpcomingEventsCount();
 
-        // Bind data attributes to the model for the admin dashboard view
         model.addAttribute("events", allEvents);
         model.addAttribute("totalEvents", allEvents.size());
         model.addAttribute("upcomingEvents", upcomingEvents);
         model.addAttribute("totalRegistrations", totalRegistrations);
+        model.addAttribute("adminUser", session.getAttribute(AdminAuthService.SESSION_ADMIN_KEY));
 
-        // Render the administrative dashboard
         return "admin/dashboard";
     }
 
@@ -115,15 +157,21 @@ public class AdminController {
         return "redirect:/admin";
     }
 
+    @PostMapping("/events/delete/{id}")
+    public String deleteEventPost(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+        return performDeleteEvent(id, redirectAttributes);
+    }
+
     @GetMapping("/events/delete/{id}")
-    public String deleteEvent(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+    public String deleteEventGet(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+        return performDeleteEvent(id, redirectAttributes);
+    }
+
+    private String performDeleteEvent(Long id, RedirectAttributes redirectAttributes) {
         try {
-            // Delete the event and any associated participant registrations
             eventService.deleteEvent(id);
-            // Flash success notification
-            redirectAttributes.addFlashAttribute("successMessage", "Event removed.");
+            redirectAttributes.addFlashAttribute("successMessage", "Event removed successfully.");
         } catch (Exception ex) {
-            // Flash error message if deletion fails due to database foreign keys or constraints
             redirectAttributes.addFlashAttribute("errorMessage", "Unable to remove event: " + ex.getMessage());
         }
         return "redirect:/admin";

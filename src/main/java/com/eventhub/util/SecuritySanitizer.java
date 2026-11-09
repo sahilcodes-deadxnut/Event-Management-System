@@ -13,34 +13,38 @@ public class SecuritySanitizer {
     private static final Pattern HTML_TAG_PATTERN = Pattern.compile("<[^>]*>");
 
     public static String sanitize(String input) {
-        // Return empty string if input is null
         if (input == null) {
             return "";
         }
 
-        // Trim leading and trailing whitespace
         String sanitized = input.trim();
-        // Remove script tags and contents
         sanitized = SCRIPT_PATTERN.matcher(sanitized).replaceAll("");
-        // Strip general HTML tags to prevent HTML injection in text fields
         sanitized = HTML_TAG_PATTERN.matcher(sanitized).replaceAll("");
-        // Normalize multiple spaces into single space
         sanitized = sanitized.replaceAll("\\s+", " ");
 
         return sanitized;
     }
 
     public static String escapeForHtml(String input) {
-        // Return empty string if input is null
         if (input == null) {
             return "";
         }
 
-        // Escape standard HTML special characters
         return input.replace("&", "&amp;")
                     .replace("<", "&lt;")
                     .replace(">", "&gt;")
                     .replace("\"", "&quot;")
                     .replace("'", "&#x27;");
+    }
+
+    /**
+     * Normalizes an email address consistently across all layers:
+     * trims whitespace, removes control characters, and converts to lowercase.
+     */
+    public static String normalizeEmail(String email) {
+        if (email == null) {
+            return "";
+        }
+        return email.replaceAll("[\\p{Cntrl}]", "").trim().toLowerCase();
     }
 }

@@ -103,7 +103,13 @@ public class Event {
 
     public int getRegisteredCount() {
         // Return total count of registered attendees associated with this event
-        return registrations != null ? registrations.size() : 0;
+        try {
+            if (registrations != null && org.hibernate.Hibernate.isInitialized(registrations)) {
+                return registrations.size();
+            }
+        } catch (Exception ignored) {
+        }
+        return 0;
     }
 
     public int getSeatsLeft() {

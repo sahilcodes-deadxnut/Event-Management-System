@@ -35,3 +35,7 @@ replay_pid*
 # OS specific files
 .DS_Store
 Thumbs.db
+
+# Scratch and temporary presentation exports
+*.pptx.tmp
+*.tmp

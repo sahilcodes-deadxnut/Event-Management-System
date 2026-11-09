@@ -59,9 +59,9 @@ public class GlobalExceptionHandler {
         }
 
         model.addAttribute("errorTitle", "Unexpected Application Error");
-        model.addAttribute("errorMessage", "The system encountered an unexpected error while processing your request.");
+        model.addAttribute("errorMessage", "The system encountered an unexpected error while processing your request. Please try again or contact the event administrator.");
         model.addAttribute("requestUri", request.getRequestURI());
-        return "about";
+        return "error";
     }
 
     private boolean isJsonRequest(HttpServletRequest request) {

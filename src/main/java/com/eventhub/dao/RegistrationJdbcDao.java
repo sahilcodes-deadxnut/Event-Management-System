@@ -29,8 +29,8 @@ public class RegistrationJdbcDao {
     }
 
     public Registration registerParticipantTransactional(Long eventId, Registration registration) {
-        // SQL queries executed within a single ACID transaction boundary
-        String checkEventSql = "SELECT title, status, capacity FROM events WHERE id = ?";
+        // SQL queries executed within a single ACID transaction boundary with row-level locking
+        String checkEventSql = "SELECT title, status, capacity FROM events WHERE id = ? FOR UPDATE";
         String countRegistrationsSql = "SELECT COUNT(*) FROM registrations WHERE event_id = ?";
         String checkDuplicateSql = "SELECT COUNT(*) FROM registrations WHERE event_id = ? AND LOWER(email) = LOWER(?)";
         String insertSql = "INSERT INTO registrations (registration_code, event_id, participant_name, email, " +
@@ -44,7 +44,7 @@ public class RegistrationJdbcDao {
             // Disable auto-commit to begin a manual transaction
             conn.setAutoCommit(false);
 
-            // Step 1: Verify event exists and is active
+            // Step 1: Verify event exists and is active with row-level lock
             int capacity;
             String eventTitle;
             try (PreparedStatement psEvent = conn.prepareStatement(checkEventSql)) {
@@ -74,7 +74,7 @@ public class RegistrationJdbcDao {
             }
 
             // Step 3: Prevent duplicate registration by checking if email already exists for this event
-            String trimmedEmail = registration.getEmail().trim().toLowerCase();
+            String trimmedEmail = com.eventhub.util.SecuritySanitizer.normalizeEmail(registration.getEmail());
             try (PreparedStatement psDup = conn.prepareStatement(checkDuplicateSql)) {
                 psDup.setLong(1, eventId);
                 psDup.setString(2, trimmedEmail);
@@ -86,7 +86,7 @@ public class RegistrationJdbcDao {
             }
 
             // Generate unique human-readable ticket code e.g. EVT-2026-A1B2C
-            String uniqueSuffix = UUID.randomUUID().toString().substring(0, 5).toUpperCase();
+            String uniqueSuffix = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
             int currentYear = LocalDateTime.now().getYear();
             String ticketCode = "EVT-" + currentYear + "-" + uniqueSuffix;
 
@@ -94,12 +94,12 @@ public class RegistrationJdbcDao {
             try (PreparedStatement psInsert = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
                 psInsert.setString(1, ticketCode);
                 psInsert.setLong(2, eventId);
-                psInsert.setString(3, registration.getParticipantName());
+                psInsert.setString(3, com.eventhub.util.SecuritySanitizer.sanitize(registration.getParticipantName()));
                 psInsert.setString(4, trimmedEmail);
-                psInsert.setString(5, registration.getPhone());
-                psInsert.setString(6, registration.getOrganization());
-                psInsert.setString(7, registration.getRoleTitle());
-                psInsert.setString(8, registration.getSpecialNotes());
+                psInsert.setString(5, com.eventhub.util.SecuritySanitizer.sanitize(registration.getPhone()));
+                psInsert.setString(6, com.eventhub.util.SecuritySanitizer.sanitize(registration.getOrganization()));
+                psInsert.setString(7, com.eventhub.util.SecuritySanitizer.sanitize(registration.getRoleTitle()));
+                psInsert.setString(8, com.eventhub.util.SecuritySanitizer.sanitize(registration.getSpecialNotes()));
                 psInsert.setTimestamp(9, Timestamp.valueOf(LocalDateTime.now()));
 
                 // Execute SQL insert statement

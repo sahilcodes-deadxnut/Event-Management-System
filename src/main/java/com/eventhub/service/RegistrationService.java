@@ -1,12 +1,18 @@
 package com.eventhub.service;
 
+import com.eventhub.concurrency.BookingLockManager;
 import com.eventhub.model.Event;
 import com.eventhub.model.Registration;
 import com.eventhub.repository.EventRepository;
 import com.eventhub.repository.RegistrationRepository;
+import com.eventhub.util.SecuritySanitizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,99 +20,119 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-@Transactional
 public class RegistrationService {
 
-    // Repositories for persisting and querying events and registration records
+    private static final Logger log = LoggerFactory.getLogger(RegistrationService.class);
+
     private final RegistrationRepository registrationRepository;
     private final EventRepository eventRepository;
-    // Lock manager supplying per-event monitor locks for thread synchronization
-    private final com.eventhub.concurrency.BookingLockManager bookingLockManager;
+    private final BookingLockManager bookingLockManager;
+    private final TransactionTemplate transactionTemplate;
 
     @Autowired
     public RegistrationService(RegistrationRepository registrationRepository,
                                EventRepository eventRepository,
-                               com.eventhub.concurrency.BookingLockManager bookingLockManager) {
-        // Inject required repository and concurrency dependencies
+                               BookingLockManager bookingLockManager,
+                               PlatformTransactionManager transactionManager) {
         this.registrationRepository = registrationRepository;
         this.eventRepository = eventRepository;
         this.bookingLockManager = bookingLockManager;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
+    /**
+     * Atomically registers a participant for an event.
+     * Synchronizes on a per-event lock monitor that wraps the transaction boundary,
+     * guaranteeing the database transaction commits completely BEFORE releasing the lock.
+     * Prevents last-seat race conditions and capacity overbooking under heavy concurrent load.
+     */
     public Registration registerParticipant(Long eventId, Registration registration) {
-        // Obtain dedicated lock object for this event ID to serialize concurrent bookings
+        if (eventId == null) {
+            throw new IllegalArgumentException("Event ID cannot be null.");
+        }
+        if (registration == null) {
+            throw new IllegalArgumentException("Registration payload cannot be null.");
+        }
+
         Object eventLock = bookingLockManager.getLock(eventId);
-
-        // Synchronize on event lock to eliminate race conditions during concurrent seat check and booking
         synchronized (eventLock) {
-            // Fetch the event by its unique ID or throw an exception if it does not exist
-            Event event = eventRepository.findById(eventId)
-                    .orElseThrow(() -> new IllegalArgumentException("Event not found with ID: " + eventId));
+            return transactionTemplate.execute(status -> {
+                Event event = eventRepository.findById(eventId)
+                        .orElseThrow(() -> new IllegalArgumentException("Event not found with ID: " + eventId));
 
-            // Prevent registration if the organizer has closed or cancelled the event
-            if (!"ACTIVE".equalsIgnoreCase(event.getStatus())) {
-                throw new IllegalStateException("Registration is closed. This event is not active.");
-            }
+                if (!"ACTIVE".equalsIgnoreCase(event.getStatus())) {
+                    throw new IllegalStateException("Registration is closed. This event is not active (status: " + event.getStatus() + ").");
+                }
 
-            // Fetch current registration count to enforce event seat limits
-            long currentCount = registrationRepository.countByEventId(eventId);
-            // Reject the registration if total attendees have reached the maximum allowed capacity
-            if (currentCount >= event.getCapacity()) {
-                throw new IllegalStateException("Event has reached maximum capacity (" + event.getCapacity() + ").");
-            }
+                long currentCount = registrationRepository.countByEventId(eventId);
+                if (currentCount >= event.getCapacity()) {
+                    throw new IllegalStateException("Event has reached maximum capacity (" + event.getCapacity() + " seats).");
+                }
 
-            // Sanitize email address by trimming spaces and converting to lowercase for consistent checking
-            String trimmedEmail = registration.getEmail().trim().toLowerCase();
-            // Prevent duplicate registrations by checking if this email is already registered for this event
-            if (registrationRepository.existsByEventIdAndEmailIgnoreCase(eventId, trimmedEmail)) {
-                throw new IllegalArgumentException("This email address is already registered for this event: " + trimmedEmail);
-            }
+                // Normalize email: trim, strip control chars, lowercase
+                String normalizedEmail = SecuritySanitizer.normalizeEmail(registration.getEmail());
+                if (normalizedEmail.isEmpty()) {
+                    throw new IllegalArgumentException("Email address is required.");
+                }
 
-            // Associate the validated event with this participant record
-            registration.setEvent(event);
-            // Store the normalized email address to guarantee data uniformity
-            registration.setEmail(trimmedEmail);
-            // Set the registration timestamp to the current system time
-            registration.setRegistrationDate(LocalDateTime.now());
+                if (registrationRepository.existsByEventIdAndEmailIgnoreCase(eventId, normalizedEmail)) {
+                    throw new IllegalArgumentException("This email address is already registered for this event: " + normalizedEmail);
+                }
 
-            // Generate a random 5-character alphanumeric token for the ticket reference
-            String uniqueSuffix = UUID.randomUUID().toString().substring(0, 5).toUpperCase();
-            // Extract the current calendar year to structure human-readable confirmation codes
-            int currentYear = LocalDateTime.now().getYear();
-            // Formulate a structured ticket code like 'EVT-2026-A1B2C' for check-in and lookup
-            registration.setRegistrationCode("EVT-" + currentYear + "-" + uniqueSuffix);
+                registration.setEvent(event);
+                registration.setEmail(normalizedEmail);
+                registration.setParticipantName(SecuritySanitizer.sanitize(registration.getParticipantName()));
+                registration.setPhone(SecuritySanitizer.sanitize(registration.getPhone()));
+                registration.setOrganization(SecuritySanitizer.sanitize(registration.getOrganization()));
+                registration.setRoleTitle(SecuritySanitizer.sanitize(registration.getRoleTitle()));
+                registration.setSpecialNotes(SecuritySanitizer.sanitize(registration.getSpecialNotes()));
+                registration.setRegistrationDate(LocalDateTime.now());
 
-            // Commit the participant registration to the database and return the saved instance
-            return registrationRepository.save(registration);
+                // Structured collision-resistant admission code
+                String uniqueSuffix = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+                int currentYear = LocalDateTime.now().getYear();
+                registration.setRegistrationCode("EVT-" + currentYear + "-" + uniqueSuffix);
+
+                Registration saved = registrationRepository.save(registration);
+                log.info("[BOOKING SUCCESS] Registered attendee '{}' for event ID {} (Code: {}). Occupancy now: {}/{}",
+                        normalizedEmail, eventId, saved.getRegistrationCode(), currentCount + 1, event.getCapacity());
+                return saved;
+            });
         }
     }
 
     @Transactional(readOnly = true)
     public List<Registration> getParticipantsByEvent(Long eventId) {
-        // Retrieve all registered participants for a given event ordered by most recent registration
         return registrationRepository.findByEventIdOrderByRegistrationDateDesc(eventId);
     }
 
     @Transactional(readOnly = true)
     public Optional<Registration> getRegistrationById(Long id) {
-        // Lookup a single registration record by primary key ID
         return registrationRepository.findById(id);
     }
 
     @Transactional(readOnly = true)
     public Optional<Registration> getRegistrationByCode(String code) {
-        // Locate a registration using the public confirmation ticket code
-        return registrationRepository.findByRegistrationCode(code);
+        if (code == null) {
+            return Optional.empty();
+        }
+        return registrationRepository.findByRegistrationCode(code.trim().toUpperCase());
     }
 
     public void cancelRegistration(Long id) {
-        // Remove a participant registration by primary key ID to free up a seat
-        registrationRepository.deleteById(id);
+        transactionTemplate.executeWithoutResult(status -> {
+            Registration reg = registrationRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Registration not found with ID: " + id));
+            Long eventId = reg.getEvent() != null ? reg.getEvent().getId() : null;
+            String email = reg.getEmail();
+            registrationRepository.deleteById(id);
+            log.info("[BOOKING CANCELLED] Cancelled registration ID {} for attendee '{}' on event ID {}. Seat released.",
+                    id, email, eventId);
+        });
     }
 
     @Transactional(readOnly = true)
     public long getTotalRegistrationsCount() {
-        // Count total registrations across all events for administrative dashboard statistics
         return registrationRepository.count();
     }
 }

@@ -1,12 +1,15 @@
 package com.eventhub.repository;
 
 import com.eventhub.model.Event;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
@@ -41,4 +44,13 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     // Count how many active events are scheduled to occur in the future
     @Query("SELECT COUNT(e) FROM Event e WHERE e.eventDate > CURRENT_TIMESTAMP AND e.status = 'ACTIVE'")
     Long countUpcomingEvents();
+
+    /**
+     * Acquires a database-level exclusive row lock (SELECT ... FOR UPDATE)
+     * guaranteeing true mutual exclusion across multiple concurrent transactions
+     * and horizontal application instances.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT e FROM Event e WHERE e.id = :id")
+    Optional<Event> findByIdWithPessimisticLock(@Param("id") Long id);
 }

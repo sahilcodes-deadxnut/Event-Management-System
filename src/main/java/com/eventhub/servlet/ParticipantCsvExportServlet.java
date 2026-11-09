@@ -1,11 +1,13 @@
 package com.eventhub.servlet;
 
 import com.eventhub.model.Registration;
+import com.eventhub.security.AdminAuthService;
 import com.eventhub.service.RegistrationService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,33 +18,36 @@ import java.util.List;
 @Component
 public class ParticipantCsvExportServlet extends HttpServlet {
 
-    // Service dependency used to query registered participant records
     private final RegistrationService registrationService;
+    private final AdminAuthService adminAuthService;
 
     @Autowired
-    public ParticipantCsvExportServlet(RegistrationService registrationService) {
-        // Inject RegistrationService instance
+    public ParticipantCsvExportServlet(RegistrationService registrationService, AdminAuthService adminAuthService) {
         this.registrationService = registrationService;
+        this.adminAuthService = adminAuthService;
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Enforce administrator authentication before allowing export of sensitive participant data
+        HttpSession session = request.getSession(false);
+        if (!adminAuthService.isAuthenticated(session)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied. Administrator privileges required to export participant rosters.");
+            return;
+        }
+
         // Extract the eventId query parameter from the HTTP GET request
         String eventIdParam = request.getParameter("eventId");
 
-        // Validate that the required eventId parameter is present and non-empty
         if (eventIdParam == null || eventIdParam.trim().isEmpty()) {
-            // Respond with HTTP 400 Bad Request error status if parameter is missing
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing required 'eventId' parameter.");
             return;
         }
 
         Long eventId;
         try {
-            // Parse eventId string into Long type
             eventId = Long.parseLong(eventIdParam.trim());
         } catch (NumberFormatException e) {
-            // Respond with HTTP 400 if parameter is not a valid numeric identifier
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid numeric format for 'eventId'.");
             return;
         }
@@ -54,7 +59,6 @@ public class ParticipantCsvExportServlet extends HttpServlet {
         response.setContentType("text/csv; charset=UTF-8");
         response.setCharacterEncoding("UTF-8");
 
-        // Set Content-Disposition header with attachment directive to force browser file download
         String fileName = "participants_event_" + eventId + ".csv";
         response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
 
@@ -63,14 +67,10 @@ public class ParticipantCsvExportServlet extends HttpServlet {
         response.setHeader("Pragma", "no-cache");
         response.setDateHeader("Expires", 0);
 
-        // Obtain character output stream from the HttpServletResponse
         try (PrintWriter writer = response.getWriter()) {
-            // Output CSV column headers row
             writer.println("Ticket Code,Participant Name,Email,Phone,Organization,Role,Registration Date");
 
-            // Iterate through participants list and stream each row formatted as comma-separated values
             for (Registration reg : participants) {
-                // Escape special characters to prevent CSV injection or broken delimiter formatting
                 String code = escapeCsv(reg.getRegistrationCode());
                 String name = escapeCsv(reg.getParticipantName());
                 String email = escapeCsv(reg.getEmail());
@@ -79,23 +79,31 @@ public class ParticipantCsvExportServlet extends HttpServlet {
                 String role = escapeCsv(reg.getRoleTitle());
                 String date = escapeCsv(reg.getFormattedDate());
 
-                // Print single comma-separated attendee line
                 writer.printf("%s,%s,%s,%s,%s,%s,%s%n", code, name, email, phone, org, role, date);
             }
 
-            // Flush the writer buffer to push remaining bytes to the client
             writer.flush();
         }
     }
 
-    private String escapeCsv(String value) {
-        // Return empty quotes if field is null
+    /**
+     * Escapes CSV fields compliant with RFC-4180 and immunizes against
+     * CSV Formula Injection (DDE) by prefixing dangerous formula symbols (=, +, -, @).
+     */
+    public static String escapeCsv(String value) {
         if (value == null) {
             return "\"\"";
         }
-        // Escape existing double quotes by doubling them per RFC 4180 CSV standard
-        String escaped = value.replace("\"", "\"\"");
-        // Wrap field value in enclosing double quotes
+        String trimmed = value.trim();
+        // Protect against spreadsheet formula injection (CWE-1236)
+        if (!trimmed.isEmpty()) {
+            char firstChar = trimmed.charAt(0);
+            if (firstChar == '=' || firstChar == '+' || firstChar == '-' || firstChar == '@' || firstChar == '\t' || firstChar == '\r') {
+                trimmed = "'" + trimmed;
+            }
+        }
+        // Double up existing quotes
+        String escaped = trimmed.replace("\"", "\"\"");
         return "\"" + escaped + "\"";
     }
 }

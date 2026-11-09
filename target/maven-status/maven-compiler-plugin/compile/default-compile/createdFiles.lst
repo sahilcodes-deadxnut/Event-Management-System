@@ -6,12 +6,15 @@ com\eventhub\controller\EventController.class
 com\eventhub\model\Registration.class
 com\eventhub\concurrency\EventMonitoringDaemon.class
 com\eventhub\config\ServletConfig.class
+com\eventhub\security\AdminAuthService.class
+com\eventhub\security\PasswordHasher.class
 com\eventhub\util\SecuritySanitizer.class
 com\eventhub\dto\EventOccupancyDto.class
 com\eventhub\controller\HomeController.class
 com\eventhub\servlet\LiveCapacitySseServlet$1.class
 com\eventhub\repository\RegistrationRepository.class
 com\eventhub\servlet\EventListServlet.class
+com\eventhub\util\PptxBuilder.class
 com\eventhub\repository\EventRepository.class
 com\eventhub\diagnostic\SystemVerificationRunner.class
 com\eventhub\dao\EventAnalyticsDao.class
@@ -23,6 +26,7 @@ com\eventhub\servlet\ParticipantCsvExportServlet.class
 com\eventhub\dao\RegistrationJdbcDao.class
 com\eventhub\dao\EventJdbcDao.class
 com\eventhub\servlet\EventJsonApiServlet.class
+com\eventhub\config\WebMvcConfig.class
 com\eventhub\service\EventService.class
 com\eventhub\servlet\TicketBadgeQrServlet.class
 com\eventhub\concurrency\BookingLockManager.class
@@ -30,3 +34,4 @@ com\eventhub\controller\AdminController.class
 com\eventhub\service\RegistrationService.class
 com\eventhub\EventManagementApplication.class
 com\eventhub\model\Event.class
+com\eventhub\security\AdminSecurityInterceptor.class
